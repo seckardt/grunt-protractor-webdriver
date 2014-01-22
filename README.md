@@ -1,4 +1,87 @@
-grunt-protractor-webdriver
-==========================
+# grunt-protractor-webdriver
 
-grunt plugin for starting Protractor's bundled Webdriver
+> grunt plugin for starting Protractor's bundled Selenium Webdriver
+
+This `Grunt` task starts a Selenium Webdriver, blocks until it's ready to accept connections, and then leaves it running in the background until the `Grunt` process finished. During startup it checks for already running Webdriver instances and at the end of the `Grunt` process also shuts down the Selenium server to not leave you with any zombies.
+
+## Getting Started
+
+This plugin requires Grunt `~0.4.0`
+
+If you haven't used [Grunt](http://gruntjs.com/) before, be sure to check out the [Getting Started](http://gruntjs.com/getting-started) guide, as it explains how to create a [Gruntfile](http://gruntjs.com/sample-gruntfile) as well as install and use Grunt plugins. Once you're familiar with that process, you may install this plugin with this command:
+
+```shell
+npm install grunt-protractor-webdriver --save-dev
+```
+
+Once the plugin has been installed, it may be enabled inside your Gruntfile with this line of JavaScript:
+
+```js
+grunt.loadNpmTasks('grunt-protractor-webdriver');
+```
+
+## The "protractor_webdriver" task
+
+### Overview
+
+In your project's Gruntfile, add a section named `protractor_webdriver` to the data object passed into `grunt.initConfig()`.
+
+```js
+grunt.initConfig({
+  protractor_webdriver: {
+    options: {
+      // Task-specific options go here.
+    },
+    your_target: {
+      // Target-specific file lists and/or options go here.
+    },
+  },
+});
+```
+
+### Options
+
+#### options.command
+
+Type: `String`
+Default value: `webdriver-manager start`
+
+Customize the way how the Selenium Webdriver is started. By default it assumes the presence of the `webdriver-manager` script (which comes bundled with `Protractor`) on the PATH.
+
+#### options.path
+
+Type: `String`
+Default value: ``
+
+Customize the path to the actual command that starts the the Selenium Webdriver. By default it assumes the presence of your script on the PATH.
+
+### Usage Examples
+
+```js
+grunt.initConfig({
+  protractor_webdriver: {
+    your_target: {
+      options: {
+        path: '/path/to/',
+        command: 'custom-webdriver-manager start',
+      },
+    },
+  },
+});
+```
+
+### Debugging
+
+By default the output of the Selenium Webdriver is not being piped to the console by the `protractor_webdriver` task. In case you need detailed information about its state, just run your `Grunt` tasks with the `--verbose` flag.
+
+## Contributing
+
+In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [Grunt](http://gruntjs.com/).
+
+## Release History
+
+* v0.1.0 - initial
+
+## License
+
+Copyright (c) 2014 Steffen Eckardt. Licensed under the MIT license.

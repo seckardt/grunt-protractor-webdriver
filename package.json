@@ -1,0 +1,40 @@
+{
+  "name": "grunt-protractor-webdriver",
+  "description": "grunt plugin for starting Protractor's bundled Webdriver",
+  "version": "0.1.0",
+  "homepage": "https://github.com/seckardt/grunt-protractor-webdriver",
+  "author": {
+    "name": "Steffen Eckardt",
+    "email": "mosh666@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/seckardt/grunt-protractor-webdriver.git"
+  },
+  "bugs": {
+    "url": "https://github.com/seckardt/grunt-protractor-webdriver/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/seckardt/grunt-protractor-webdriver/blob/master/LICENSE-MIT"
+    }
+  ],
+  "engines": {
+    "node": ">= 0.8.0"
+  },
+  "devDependencies": {
+    "grunt-contrib-jshint": "~0.8.0",
+    "grunt-contrib-clean": "~0.5.0",
+    "protractor": "~0.16.1",
+    "grunt": "~0.4.2"
+  },
+  "peerDependencies": {
+    "grunt": "~0.4.0",
+    "protractor": ">= 0.14.0"
+  },
+  "keywords": [
+    "gruntplugin",
+    "protractor"
+  ]
+}
