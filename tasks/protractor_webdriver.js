@@ -12,10 +12,9 @@
  * @see https://code.google.com/p/selenium/wiki/WebDriverJs
  * @see http://angularjs.org
  */
-
-'use strict';
-
 module.exports = function (grunt) {
+	'use strict';
+
 	var spawn = require('child_process').spawn,
 		http = require('http'),
 		noop = function () {},
@@ -23,8 +22,11 @@ module.exports = function (grunt) {
 		STARTED_REGEXP = /Started org\.openqa\.jetty\.jetty\.Server/,
 		RUNNING_REGEXP = /Selenium is already running/,
 		FAILURE_REGEXP = /Failed to start/,
-		DONE_REGEXP = /Executing: \[delete session: (.*)\]/,
-		SHUTDOWN_OK_REGEXP = /OKOK/,
+		SESSION_DELETE_REGEXP = /Executing: \[delete session: (.*)\]/,
+		SESSION_NEW_REGEXP = /Executing: \[new session: (.*)\]/,
+		EXCEPTION_REGEXP = /Exception thrown(.*)/m,
+		FATAL_REGEXP = /Fatal error/,
+		SHUTDOWN_OK_REGEXP = /OKOK/i,
 		DEFAULT_CMD = 'webdriver-manager start',
 		DEFAULT_INSTANCE = 'http://localhost:4444';
 
@@ -51,14 +53,19 @@ module.exports = function (grunt) {
 		return proc;
 	}
 
-	function Webdriver(context, options) {
+	function Webdriver(context, options, restarted) {
 		var done = context.async(),
+			restartedPrefix = (restarted === true ? 'Res' : 'S'),
 			selenium,
 			destroy,
-			server = DEFAULT_INSTANCE;
+			failureTimeout,
+			stackTrace,
+			server = DEFAULT_INSTANCE,
+			sessions = 0, // Running sessions
+			status = [false, false]; // [0 = Stopping, 1 = Stopped]
 
 		function start() {
-			grunt.log.writeln('Starting'.cyan + ' Selenium server');
+			grunt.log.writeln((restartedPrefix + 'tarting').cyan + ' Selenium server');
 
 			selenium = exec(options.path + options.command);
 			selenium.on('exit', exit);
@@ -71,13 +78,18 @@ module.exports = function (grunt) {
 		}
 
 		function started(callback) {
-			grunt.log.writeln('Started'.cyan + ' Selenium server: ' + server.green);
+			status[1] = false;
+			grunt.log.writeln((restartedPrefix + 'tarted').cyan + ' Selenium server: ' + server.green);
 			if (callback) {
 				callback();
 			}
 		}
 
 		function stop(callback) {
+			if (status[0] || status[1]) {
+				return;
+			}
+			status[0] = true;
 			grunt.log.writeln('Shutting down'.cyan + ' Selenium server: ' + server);
 
 			var response = '';
@@ -85,8 +97,9 @@ module.exports = function (grunt) {
 				res.on('data',function (data) {
 					response += data;
 				}).on('end', function () {
+					status[0] = false;
 					if (callback) {
-						var success = SHUTDOWN_OK_REGEXP.test(response);
+						var success = status[1] = SHUTDOWN_OK_REGEXP.test(response);
 						grunt.log.writeln('Shut down'.cyan + ' Selenium server: ' + server + ' (' + (success ? response.green : response.red) + ')');
 						callback(success);
 					}
@@ -96,11 +109,15 @@ module.exports = function (grunt) {
 
 		function exit(proc) {
 			return function (callback) {
+				if (status[0] || status[1]) {
+					return;
+				}
+
 				proc.stdout.destroy();
 				proc.stderr.destroy();
 
 				callback = callback || function () {
-					grunt.fatal('Selenium terminated unexpectedly');
+					grunt.fatal(stackTrace || 'Selenium terminated unexpectedly');
 				};
 
 				stop(callback);
@@ -108,7 +125,7 @@ module.exports = function (grunt) {
 		}
 
 		function data(out) {
-			grunt.verbose.writeln('SELENIUM: '.cyan + out);
+			grunt.verbose.writeln('>> '.red + out);
 
 			if (REMOTE_REGEXP.test(out)) {
 				var result = REMOTE_REGEXP.exec(out);
@@ -119,22 +136,40 @@ module.exports = function (grunt) {
 				// Success
 				started(done);
 			} else if (RUNNING_REGEXP.test(out)) {
+				if (failureTimeout) {
+					clearTimeout(failureTimeout);
+				}
+
 				// Webdriver instance is already running -> Trying to shutdown
 				stop(function (success) {
 					if (success) {
 						// Shutdown succeeded -> Retry
-						new Webdriver(context, options);
+						new Webdriver(context, options, true);
 					} else {
 						// Shutdown failed -> Exit
 						destroy();
 					}
 				});
 			} else if (FAILURE_REGEXP.test(out)) {
+				// Failure -> Exit after timeout. The timeout is needed to
+				// enable further console sniffing as the output needed to
+				// match `RUNNING_REGEXP` is coming behind the failure message.
+				failureTimeout = setTimeout(destroy, 500);
+			} else if (EXCEPTION_REGEXP.test(out)) {
+				// Failure -> Exit
+				grunt.log.writeln('Exception thrown.'.red + ' Going to shut down the Selenium server.');
+				stackTrace = out;
+				destroy();
+			} else if (FATAL_REGEXP.test(out)) {
 				// Failure -> Exit
 				destroy();
-			} else if (DONE_REGEXP.test(out)) {
+			} else if (SESSION_NEW_REGEXP.test(out)) {
+				sessions++;
+			} else if (SESSION_DELETE_REGEXP.test(out)) {
 				// Done -> Exit
-				destroy(noop);
+				if (--sessions <= 0) {
+					destroy(noop);
+				}
 			}
 		}
 
