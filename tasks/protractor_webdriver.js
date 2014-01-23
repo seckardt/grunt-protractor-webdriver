@@ -18,15 +18,16 @@ module.exports = function (grunt) {
 	var spawn = require('child_process').spawn,
 		http = require('http'),
 		noop = function () {},
-		REMOTE_REGEXP = /RemoteWebDriver instances should connect to: (.*)/,
-		STARTED_REGEXP = /Started org\.openqa\.jetty\.jetty\.Server/,
-		RUNNING_REGEXP = /Selenium is already running/,
-		FAILURE_REGEXP = /Failed to start/,
-		SESSION_DELETE_REGEXP = /Executing: \[delete session: (.*)\]/,
-		SESSION_NEW_REGEXP = /Executing: \[new session: (.*)\]/,
-		EXCEPTION_REGEXP = /Exception thrown(.*)/m,
-		FATAL_REGEXP = /Fatal error/,
-		SHUTDOWN_OK_REGEXP = /OKOK/i,
+		REGEXP_REMOTE = /RemoteWebDriver instances should connect to: (.*)/,
+		REGEXP_STARTED = /Started org\.openqa\.jetty\.jetty\.Server/,
+		REGEXP_RUNNING = /Selenium is already running/,
+		REGEXP_FAILURE = /Failed to start/,
+		REGEXP_SESSION_DELETE = /Executing: \[delete session: (.*)\]/,
+		REGEXP_SESSION_NEW = /Executing: \[new session: (.*)\]/,
+		REGEXP_CAPABILITIES = /Capabilities \[\{(.*)\}\]/,
+		REGEXP_EXCEPTION = /Exception thrown(.*)/m,
+		REGEXP_FATAL = /Fatal error/,
+		REGEXP_SHUTDOWN_OK = /OKOK/i,
 		DEFAULT_CMD = 'webdriver-manager start',
 		DEFAULT_INSTANCE = 'http://localhost:4444';
 
@@ -46,11 +47,15 @@ module.exports = function (grunt) {
 			file = '/bin/sh';
 			args = ['-c', command];
 		}
+		return spawn(file, args, opts);
+	}
 
-		var proc = spawn(file, args, opts);
-		proc.stdout.setEncoding('utf8');
-		proc.stderr.setEncoding('utf8');
-		return proc;
+	function extract(regexp, value, idx) {
+		var result;
+		if (regexp.test(value) && (result = regexp.exec(value)) && typeof result[idx] === 'string') {
+			return result[idx].trim();
+		}
+		return '';
 	}
 
 	function Webdriver(context, options, restarted) {
@@ -62,7 +67,8 @@ module.exports = function (grunt) {
 			stackTrace,
 			server = DEFAULT_INSTANCE,
 			sessions = 0, // Running sessions
-			status = [false, false]; // [0 = Stopping, 1 = Stopped]
+			status = [false, false],  // [0 = Stopping, 1 = Stopped]
+			stopCallbacks = [];
 
 		function start() {
 			grunt.log.writeln((restartedPrefix + 'tarting').cyan + ' Selenium server');
@@ -71,6 +77,8 @@ module.exports = function (grunt) {
 			selenium.on('exit', exit);
 			selenium.on('close', exit);
 
+			selenium.stdout.setEncoding('utf8');
+			selenium.stderr.setEncoding('utf8');
 			selenium.stdout.on('data', data);
 			selenium.stderr.on('data', data);
 
@@ -87,6 +95,7 @@ module.exports = function (grunt) {
 
 		function stop(callback) {
 			if (status[0] || status[1]) {
+				stopCallbacks.push(callback);
 				return;
 			}
 			status[0] = true;
@@ -99,9 +108,13 @@ module.exports = function (grunt) {
 				}).on('end', function () {
 					status[0] = false;
 					if (callback) {
-						var success = status[1] = SHUTDOWN_OK_REGEXP.test(response);
+						var success = status[1] = REGEXP_SHUTDOWN_OK.test(response);
+						stopCallbacks.push(callback);
 						grunt.log.writeln('Shut down'.cyan + ' Selenium server: ' + server + ' (' + (success ? response.green : response.red) + ')');
-						callback(success);
+						stopCallbacks.forEach(function (cb) {
+							cb(success);
+						});
+						stopCallbacks = [];
 					}
 				});
 			});
@@ -126,16 +139,14 @@ module.exports = function (grunt) {
 
 		function data(out) {
 			grunt.verbose.writeln('>> '.red + out);
+			var lines;
 
-			if (REMOTE_REGEXP.test(out)) {
-				var result = REMOTE_REGEXP.exec(out);
-				if (typeof result[1] === 'string' && result[1].trim().length > 0) {
-					server = result[1].replace(/\/wd\/hub/, '');
-				}
-			} else if (STARTED_REGEXP.test(out)) {
+			if (REGEXP_REMOTE.test(out)) {
+				server = extract(REGEXP_REMOTE, out, 1) || server;
+			} else if (REGEXP_STARTED.test(out)) {
 				// Success
 				started(done);
-			} else if (RUNNING_REGEXP.test(out)) {
+			} else if (REGEXP_RUNNING.test(out)) {
 				if (failureTimeout) {
 					clearTimeout(failureTimeout);
 				}
@@ -150,26 +161,50 @@ module.exports = function (grunt) {
 						destroy();
 					}
 				});
-			} else if (FAILURE_REGEXP.test(out)) {
+			} else if (REGEXP_FAILURE.test(out)) {
 				// Failure -> Exit after timeout. The timeout is needed to
 				// enable further console sniffing as the output needed to
-				// match `RUNNING_REGEXP` is coming behind the failure message.
+				// match `REGEXP_RUNNING` is coming behind the failure message.
 				failureTimeout = setTimeout(destroy, 500);
-			} else if (EXCEPTION_REGEXP.test(out)) {
+			} else if (REGEXP_EXCEPTION.test(out)) {
 				// Failure -> Exit
-				grunt.log.writeln('Exception thrown.'.red + ' Going to shut down the Selenium server.');
+				grunt.log.writeln('Exception thrown:'.red + ' Going to shut down the Selenium server');
 				stackTrace = out;
 				destroy();
-			} else if (FATAL_REGEXP.test(out)) {
+			} else if (REGEXP_FATAL.test(out)) {
 				// Failure -> Exit
 				destroy();
-			} else if (SESSION_NEW_REGEXP.test(out)) {
-				sessions++;
-			} else if (SESSION_DELETE_REGEXP.test(out)) {
-				// Done -> Exit
-				if (--sessions <= 0) {
-					destroy(noop);
-				}
+			} else if (REGEXP_SESSION_NEW.test(out)) {
+				// As there might be race-conditions with multiple logs for
+				// `REGEXP_SESSION_NEW` in one log statement, we have to parse
+				// parse the data
+				lines = out.split(/[\n\r]/);
+				lines.forEach(function (line) {
+					if (REGEXP_SESSION_NEW.test(line)) {
+						sessions++;
+						var caps = extract(REGEXP_CAPABILITIES, line, 1);
+						grunt.log.writeln('Session created: '.cyan + caps);
+					}
+				});
+			} else if (REGEXP_SESSION_DELETE.test(out)) {
+				// As there might be race-conditions with multiple logs for
+				// `REGEXP_SESSION_NEW` in one log statement, we have to parse
+				// parse the data
+				lines = out.split(/[\n\r]/);
+				lines.forEach(function (line) {
+					if (REGEXP_SESSION_DELETE.test(line)) {
+						sessions--;
+						var msg = 'Session deleted: '.cyan;
+
+						if (sessions <= 0) {
+							// Done -> Exit
+							grunt.log.writeln(msg + 'Going to shut down the Selenium server');
+							destroy(noop);
+						} else {
+							grunt.log.writeln(msg + sessions + ' session(s) left');
+						}
+					}
+				});
 			}
 		}
 

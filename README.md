@@ -80,6 +80,7 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 
 ## Release History
 
+* v0.1.2 - Harden waiting for all browser sessions to be deleted before shutdown. Due to possible race-conditions with log statements for multiple browser sessions in one line, the session counter didn't work properly.
 * v0.1.1 - Ensure waiting for eventual `Selenium is already running` message on failure. Ensure waiting for all browser sessions to be deleted before shutdown.
 * v0.1.0 - Initial commit.
 
