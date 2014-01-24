@@ -17,6 +17,7 @@ module.exports = function (grunt) {
 
 	var spawn = require('child_process').spawn,
 		http = require('http'),
+		rl = require('readline'),
 		noop = function () {},
 		REGEXP_REMOTE = /RemoteWebDriver instances should connect to: (.*)/,
 		REGEXP_STARTED = /Started org\.openqa\.jetty\.jetty\.Server/,
@@ -32,22 +33,25 @@ module.exports = function (grunt) {
 		DEFAULT_INSTANCE = 'http://localhost:4444';
 
 	function exec(command) {
-		var file,
-			args,
-			opts = {
-				cwd: process.cwd(),
-				stdio: [process.stdin]
-			};
+		var opts = {
+			cwd: process.cwd(),
+			stdio: [process.stdin]
+		};
 
 		if (process.platform === 'win32') {
-			file = 'cmd.exe';
-			args = ['/s', '/c', command.replace(/\//g, '\\')];
 			opts.windowsVerbatimArguments = true;
+
+			var child = spawn('cmd.exe', ['/s', '/c', command.replace(/\//g, '\\')], opts);
+			rl.createInterface({
+				input: process.stdin,
+				output: process.stdout
+			}).on('SIGINT', function () {
+				process.emit('SIGINT');
+			});
+			return child;
 		} else {
-			file = '/bin/sh';
-			args = ['-c', command];
+			return spawn('/bin/sh', ['-c', command], opts);
 		}
-		return spawn(file, args, opts);
 	}
 
 	function extract(regexp, value, idx) {
@@ -67,15 +71,18 @@ module.exports = function (grunt) {
 			stackTrace,
 			server = DEFAULT_INSTANCE,
 			sessions = 0, // Running sessions
-			status = [false, false],  // [0 = Stopping, 1 = Stopped]
+			status = [false, false, false],// [0 = Stopping, 1 = Stopped, 2 = exited]
 			stopCallbacks = [];
 
 		function start() {
 			grunt.log.writeln((restartedPrefix + 'tarting').cyan + ' Selenium server');
 
 			selenium = exec(options.path + options.command);
-			selenium.on('exit', exit);
-			selenium.on('close', exit);
+			selenium.on('error', exit)
+				.on('uncaughtException', exit)
+				.on('exit', exit)
+				.on('close', exit)
+				.on('SIGINT', exit);
 
 			selenium.stdout.setEncoding('utf8');
 			selenium.stderr.setEncoding('utf8');
@@ -94,7 +101,9 @@ module.exports = function (grunt) {
 		}
 
 		function stop(callback) {
-			if (status[0] || status[1]) {
+			if (status[2]) {
+				callback(true);
+			} else if (status[0] || status[1]) {
 				stopCallbacks.push(callback);
 				return;
 			}
@@ -108,13 +117,14 @@ module.exports = function (grunt) {
 				}).on('end', function () {
 					status[0] = false;
 					if (callback) {
-						var success = status[1] = REGEXP_SHUTDOWN_OK.test(response);
-						stopCallbacks.push(callback);
+						var success = status[1] = REGEXP_SHUTDOWN_OK.test(response),
+							callbacks = stopCallbacks.slice();
+						stopCallbacks = [];
+						callbacks.push(callback);
 						grunt.log.writeln('Shut down'.cyan + ' Selenium server: ' + server + ' (' + (success ? response.green : response.red) + ')');
-						stopCallbacks.forEach(function (cb) {
+						callbacks.forEach(function (cb) {
 							cb(success);
 						});
-						stopCallbacks = [];
 					}
 				});
 			});
@@ -122,18 +132,22 @@ module.exports = function (grunt) {
 
 		function exit(proc) {
 			return function (callback) {
-				if (status[0] || status[1]) {
-					return;
-				}
+				var cb = function () {
+					status[2] = true;
+					proc.kill();
 
-				proc.stdout.destroy();
-				proc.stderr.destroy();
-
-				callback = callback || function () {
-					grunt.fatal(stackTrace || 'Selenium terminated unexpectedly');
+					if (typeof callback === 'function') {
+						callback();
+					} else {
+						grunt.fatal(stackTrace || 'Selenium terminated unexpectedly');
+					}
 				};
 
-				stop(callback);
+				if (status[2]) {
+					cb();
+					return;
+				}
+				stop(cb);
 			};
 		}
 
@@ -142,7 +156,7 @@ module.exports = function (grunt) {
 			var lines;
 
 			if (REGEXP_REMOTE.test(out)) {
-				server = extract(REGEXP_REMOTE, out, 1) || server;
+				server = extract(REGEXP_REMOTE, out, 1).replace(/\/wd\/hub/, '') || server;
 			} else if (REGEXP_STARTED.test(out)) {
 				// Success
 				started(done);
