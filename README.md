@@ -1,4 +1,4 @@
-# grunt-protractor-webdriver
+# grunt-protractor-webdriver [![devDependency Status](https://david-dm.org/seckardt/grunt-protractor-webdriver/dev-status.png)](https://david-dm.org/seckardt/grunt-protractor-webdriver#info=devDependencies)
 
 > grunt plugin for starting Protractor's bundled Selenium Webdriver
 
