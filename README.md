@@ -1,6 +1,8 @@
-# grunt-protractor-webdriver [![devDependency Status](https://david-dm.org/seckardt/grunt-protractor-webdriver/dev-status.png)](https://david-dm.org/seckardt/grunt-protractor-webdriver#info=devDependencies)
+# grunt-protractor-webdriver [![devDependency Status](https://david-dm.org/seckardt/grunt-protractor-webdriver/dev-status.png)](https://david-dm.org/seckardt/grunt-protractor-webdriver#info=devDependencies) [![NPM version](https://badge.fury.io/js/grunt-protractor-webdriver.png)](http://badge.fury.io/js/grunt-protractor-webdriver) [![Built with Grunt](https://cdn.gruntjs.com/builtwith.png)](http://gruntjs.com/)
 
 > grunt plugin for starting Protractor's bundled Selenium Webdriver
+
+[![Npm Downloads](https://nodei.co/npm/grunt-protractor-webdriver.png?downloads=true&stars=true)](https://nodei.co/npm/grunt-protractor-webdriver.png?downloads=true&stars=true)
 
 This `Grunt` task starts a Selenium Webdriver, blocks until it's ready to accept connections, and then leaves it running in the background until the `Grunt` process finished. During startup it checks for already running Webdriver instances and at the end of the `Grunt` process also shuts down the Selenium server to not leave you with any zombies.
 
@@ -80,6 +82,7 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 
 ## Release History
 
+* v0.1.4 - No code changes. Just had to push new release as v0.1.3 seems to be lost in the NPM repo...
 * v0.1.3 - Fix regression of v0.1.2 with wrong Selenium server path being used. Add additional exit handlers for `.on('error')`, `.on('uncaughtException')` and `.on('SIGINT')`.
 * v0.1.2 - Harden waiting for all browser sessions to be deleted before shutdown. Due to possible race-conditions with log statements for multiple browser sessions in one line, the session counter didn't work properly.
 * v0.1.1 - Ensure waiting for eventual `Selenium is already running` message on failure. Ensure waiting for all browser sessions to be deleted before shutdown.
