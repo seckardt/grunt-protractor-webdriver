@@ -7,47 +7,108 @@
  */
 'use strict';
 
-module.exports = function(grunt) {
-  // Project configuration.
-  grunt.initConfig({
-    jshint: {
-      all: [
-        'Gruntfile.js',
-        'tasks/*.js'
-      ],
-      options: {
-        jshintrc: '.jshintrc'
-      }
-    },
+module.exports = function (grunt) {
+	grunt.loadTasks('tasks');
+	grunt.loadNpmTasks('grunt-contrib-jshint');
+	grunt.loadNpmTasks('grunt-protractor-runner');
+	grunt.loadNpmTasks('grunt-concurrent');
+	grunt.loadNpmTasks('grunt-express');
+	grunt.loadNpmTasks('grunt-shell');
 
-    // Before generating any new files, remove any previously-created files.
-    clean: {
-      tests: ['tmp']
-    },
+	var path = require('path'),
+		isWindows = process.platform === 'win32',
+		ptorDir = 'node_modules' + (isWindows ? '/.' : '/protractor/') + 'bin/';
 
-    // Configuration to be run (and then tested).
-    protractor_webdriver: {
-      default_options: {},
-      custom_options: {
-        options: {
-          path: '',
-          command: ''
-        }
-      }
-    }
-  });
+	// Project configuration.
+	grunt.initConfig({
+		jshint: {
+			options: {
+				jshintrc: '.jshintrc'
+			},
+			all: [
+				'Gruntfile.js',
+				'tasks/*.js'
+			]
+		},
 
-  // Actually load this plugin's task(s).
-  grunt.loadTasks('tasks');
+		express: {
+			server: {
+				options: {
+					port: 9999,
+					hostname: 'localhost',
+					server: 'server'
+				}
+			}
+		},
 
-  // These plugins provide necessary tasks.
-  grunt.loadNpmTasks('grunt-contrib-jshint');
-  grunt.loadNpmTasks('grunt-contrib-clean');
+		protractor_webdriver: {
+			e2e: {
+				options: {
+					path: ptorDir
+				}
+			}
+		},
 
-  // Whenever the "test" task is run, first clean the "tmp" dir, then run this
-  // plugin's task(s), then test the result.
-  grunt.registerTask('test', ['clean', 'protractor_webdriver']);
+		protractor: {
+			options: {
+				configFile: 'protractor.conf.js',
+				keepAlive: false
+			},
+			chrome: {
+				options: {
+					args: {
+						capabilities: {
+							browserName: 'chrome'
+						}
+					}
+				}
+			},
+			firefox: {
+				options: {
+					args: {
+						capabilities: {
+							browserName: 'firefox'
+						}
+					}
+				}
+			}
+		},
 
-  // By default, lint and run all tests.
-  grunt.registerTask('default', ['jshint', 'test']);
+		shell: {
+			protractor: {
+				options: {
+					stdout: true
+				},
+				command: path.resolve(ptorDir + 'webdriver-manager') + ' update --standalone --chrome'
+			}
+		},
+
+		concurrent: {
+			options: {
+				logConcurrentOutput: true
+			},
+			e2e: {
+				tasks: [
+					'protractor:chrome',
+					'protractor:firefox'
+				]
+			}
+		}
+	});
+
+
+	grunt.registerTask('test', [
+		'default',
+		'express:server',
+		'shell:protractor',
+		'protractor_webdriver:e2e',
+		'concurrent:e2e'
+	]);
+
+	grunt.registerTask('server', [
+		'express:server',
+		'express-keepalive'
+	]);
+
+	grunt.registerTask('default', ['jshint']);
 };
