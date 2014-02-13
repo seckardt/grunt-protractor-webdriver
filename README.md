@@ -1,10 +1,12 @@
 # grunt-protractor-webdriver [![devDependency Status](https://david-dm.org/seckardt/grunt-protractor-webdriver/dev-status.png)](https://david-dm.org/seckardt/grunt-protractor-webdriver#info=devDependencies) [![NPM version](https://badge.fury.io/js/grunt-protractor-webdriver.png)](http://badge.fury.io/js/grunt-protractor-webdriver) [![Built with Grunt](https://cdn.gruntjs.com/builtwith.png)](http://gruntjs.com/)
 
-> grunt plugin for starting Protractor's bundled Selenium Webdriver
+> grunt plugin for starting [Protractor](https://github.com/angular/protractor)'s bundled [Selenium WebDriver](https://code.google.com/p/selenium/wiki/WebDriverJs)
 
 [![Npm Downloads](https://nodei.co/npm/grunt-protractor-webdriver.png?downloads=true&stars=true)](https://nodei.co/npm/grunt-protractor-webdriver.png?downloads=true&stars=true)
 
-This `Grunt` task starts a Selenium Webdriver, blocks until it's ready to accept connections, and then leaves it running in the background until the `Grunt` process finished. During startup it checks for already running Webdriver instances and at the end of the `Grunt` process also shuts down the Selenium server to not leave you with any zombies.
+This `Grunt` task starts a Selenium WebDriver, blocks until it's ready to accept connections, and then leaves it running in the background until the `Grunt` process finished. During startup it checks for already running WebDriver instances and at the end of the `Grunt` process also shuts down the Selenium server to not leave you with any zombies.
+
+`grunt-protractor-webdriver` is capable to handle parallelized tasks in case you use helpers like [`grunt-concurrent`](https://github.com/sindresorhus/grunt-concurrent). That way you are able to work around the missing feature in Protractor that it's currently not able to run the tests against multiple browsers in parallel. See the `Gruntfile.js` for an example on how to do that.
 
 ## Getting Started
 
@@ -48,14 +50,14 @@ grunt.initConfig({
 Type: `String`
 Default value: `webdriver-manager start`
 
-Customize the way how the Selenium Webdriver is started. By default it assumes the presence of the `webdriver-manager` script (which comes bundled with `Protractor`) on the PATH.
+Customize the way how the Selenium WebDriver is started. By default it assumes the presence of the `webdriver-manager` script (which comes bundled with `Protractor`) on the `PATH`.
 
 #### options.path
 
 Type: `String`
 Default value: ``
 
-Customize the path to the actual command that starts the the Selenium Webdriver. By default it assumes the presence of your script on the PATH.
+Customize the path to the actual command that starts the the Selenium WebDriver. By default it assumes the presence of your script on the `PATH`.
 
 ### Usage Examples
 
@@ -74,7 +76,7 @@ grunt.initConfig({
 
 ### Debugging
 
-By default the output of the Selenium Webdriver is not being piped to the console by the `protractor_webdriver` task. In case you need detailed information about its state, just run your `Grunt` tasks with the `--verbose` flag.
+By default the output of the Selenium WebDriver is not being piped to the console by the `protractor_webdriver` task. In case you need detailed information about its state, just run your `Grunt` tasks with the `--verbose` flag.
 
 ## Contributing
 
