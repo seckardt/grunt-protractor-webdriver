@@ -4,6 +4,13 @@ exports.config = {
 	rootElement: 'html',
 	specs: ['test/e2e/*.spec.js'],
 	allScriptsTimeout: 60000,
+	chromeOnly: false,
+
+	multiCapabilities: [{
+		browserName: 'chrome'
+	}, {
+		browserName: 'firefox'
+	}],
 
 	jasmineNodeOpts: {
 		onComplete: null,

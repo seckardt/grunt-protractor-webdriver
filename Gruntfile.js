@@ -11,7 +11,6 @@ module.exports = function (grunt) {
 	grunt.loadTasks('tasks');
 	grunt.loadNpmTasks('grunt-contrib-jshint');
 	grunt.loadNpmTasks('grunt-protractor-runner');
-	grunt.loadNpmTasks('grunt-concurrent');
 	grunt.loadNpmTasks('grunt-express');
 	grunt.loadNpmTasks('grunt-shell');
 
@@ -54,24 +53,7 @@ module.exports = function (grunt) {
 				configFile: 'protractor.conf.js',
 				keepAlive: false
 			},
-			chrome: {
-				options: {
-					args: {
-						capabilities: {
-							browserName: 'chrome'
-						}
-					}
-				}
-			},
-			firefox: {
-				options: {
-					args: {
-						capabilities: {
-							browserName: 'firefox'
-						}
-					}
-				}
-			}
+			local: {}
 		},
 
 		shell: {
@@ -80,18 +62,6 @@ module.exports = function (grunt) {
 					stdout: true
 				},
 				command: path.resolve(ptorDir + 'webdriver-manager') + ' update --standalone --chrome'
-			}
-		},
-
-		concurrent: {
-			options: {
-				logConcurrentOutput: true
-			},
-			e2e: {
-				tasks: [
-					'protractor:chrome',
-					'protractor:firefox'
-				]
 			}
 		}
 	});
@@ -102,7 +72,7 @@ module.exports = function (grunt) {
 		'express:server',
 		'shell:protractor',
 		'protractor_webdriver:e2e',
-		'concurrent:e2e'
+		'protractor:local'
 	]);
 
 	grunt.registerTask('server', [
