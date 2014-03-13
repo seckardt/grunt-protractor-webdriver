@@ -84,6 +84,7 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 
 ## Release History
 
+* v0.1.5 - No code changes. Updated test showcase to use `Protractor` v.20.1
 * v0.1.4 - No code changes. Just had to push new release as v0.1.3 seems to be lost in the NPM repo...
 * v0.1.3 - Fix regression of v0.1.2 with wrong Selenium server path being used. Add additional exit handlers for `.on('error')`, `.on('uncaughtException')` and `.on('SIGINT')`.
 * v0.1.2 - Harden waiting for all browser sessions to be deleted before shutdown. Due to possible race-conditions with log statements for multiple browser sessions in one line, the session counter didn't work properly.
