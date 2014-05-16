@@ -184,7 +184,7 @@ module.exports = function (grunt) {
 				// Failure -> Exit
 				grunt.log.writeln('Exception thrown:'.red);
         stackTrace = out;
-        grunt.log.writeln(out.red);
+        grunt.warn(out);
 				// destroy();
 			} else if (REGEXP_FATAL.test(out)) {
 				// Failure -> Exit
