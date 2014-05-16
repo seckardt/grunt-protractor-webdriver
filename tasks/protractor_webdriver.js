@@ -182,9 +182,9 @@ module.exports = function (grunt) {
 				failureTimeout = setTimeout(destroy, 500);
 			} else if (REGEXP_EXCEPTION.test(out)) {
 				// Failure -> Exit
-				grunt.log.writeln('Exception thrown:'.red + ' Going to shut down the Selenium server');
+				grunt.log.writeln('Exception thrown:'.red + ' NOTGoing to shut down the Selenium server');
 				stackTrace = out;
-				destroy();
+				// destroy();
 			} else if (REGEXP_FATAL.test(out)) {
 				// Failure -> Exit
 				destroy();
