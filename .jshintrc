@@ -10,5 +10,6 @@
   "noarg": true,
   "node": true,
   "sub": true,
-  "undef": true
+  "undef": true,
+  "unused": true
 }

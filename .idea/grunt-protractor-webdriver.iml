@@ -11,6 +11,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="angular" level="project" />
     <orderEntry type="library" name="grunt" level="project" />
+    <orderEntry type="library" name="Node.js Modules" level="project" />
   </component>
 </module>
 

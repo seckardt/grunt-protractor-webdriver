@@ -23,6 +23,7 @@ module.exports = function (grunt) {
 		REGEXP_STARTED = /Started org\.openqa\.jetty\.jetty\.Server/,
 		REGEXP_RUNNING = /Selenium is already running/,
 		REGEXP_FAILURE = /Failed to start/,
+		REGEXP_NOTPRESENT = /Selenium Standalone is not present/i,
 		REGEXP_SESSION_DELETE = /Executing: \[delete session: (.*)\]/,
 		REGEXP_SESSION_NEW = /Executing: \[new session: (.*)\]/,
 		REGEXP_CAPABILITIES = /Capabilities \[\{(.*)\}\]/,
@@ -71,7 +72,7 @@ module.exports = function (grunt) {
 			stackTrace,
 			server = DEFAULT_INSTANCE,
 			sessions = 0, // Running sessions
-			status = [false, false, false],// [0 = Stopping, 1 = Stopped, 2 = exited]
+			status = [false, false, false],// [0 = Stopping, 1 = Stopped, 2 = Exited]
 			stopCallbacks = [];
 
 		function start() {
@@ -103,6 +104,7 @@ module.exports = function (grunt) {
 		function stop(callback) {
 			if (status[2]) {
 				callback(true);
+				return;
 			} else if (status[0] || status[1]) {
 				stopCallbacks.push(callback);
 				return;
@@ -180,6 +182,9 @@ module.exports = function (grunt) {
 				// enable further console sniffing as the output needed to
 				// match `REGEXP_RUNNING` is coming behind the failure message.
 				failureTimeout = setTimeout(destroy, 500);
+			} else if (REGEXP_NOTPRESENT.test(out)) {
+				// Failure -> Selenium server not present
+				grunt.warn(out);
 			} else if (REGEXP_EXCEPTION.test(out)) {
 				// Failure -> Exit
 				grunt.log.writeln('Exception thrown:'.red + ' Going to shut down the Selenium server');
@@ -221,6 +226,17 @@ module.exports = function (grunt) {
 				});
 			}
 		}
+
+		process.on('removeListener', function (event, fn) {
+			// Grunt uses node-exit [0], which eats process 'exit' event handlers.
+			// Instead, listen for an implementation detail: When Grunt shuts down, it
+			// removes some 'uncaughtException' event handlers that contain the string
+			// 'TASK_FAILURE'. Super hacky, but it works.
+			// [0]: https://github.com/cowboy/node-exit
+			if (event === 'uncaughtException' && fn.toString().match(/TASK_FAILURE/)) {
+				stop(noop);
+			}
+		});
 
 		start();
 	}
