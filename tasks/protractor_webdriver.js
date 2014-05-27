@@ -217,8 +217,12 @@ module.exports = function (grunt) {
 
 						if (sessions <= 0) {
 							// Done -> Exit
-							grunt.log.writeln(msg + 'Going to shut down the Selenium server');
-							destroy(noop);
+							if (options.keepAlive) {
+								grunt.log.writeln(msg + 'Keeping the Selenium server alive');
+							} else {
+								grunt.log.writeln(msg + 'Going to shut down the Selenium server');
+								destroy(noop);
+							}
 						} else {
 							grunt.log.writeln(msg + sessions + ' session(s) left');
 						}
@@ -244,7 +248,8 @@ module.exports = function (grunt) {
 	grunt.registerMultiTask('protractor_webdriver', 'grunt plugin for starting Protractor\'s bundled Selenium Webdriver', function () {
 		new Webdriver(this, this.options({
 			path: '',
-			command: DEFAULT_CMD
+			command: DEFAULT_CMD,
+			keepAlive: false
 		}));
 	});
 };

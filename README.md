@@ -59,6 +59,13 @@ Default value: ``
 
 Customize the path to the actual command that starts the the Selenium WebDriver. By default it assumes the presence of your script on the `PATH`.
 
+#### options.keepAlive
+
+Type: `Boolean`
+Default value: `false`
+
+Whether or not to keep the Selenium server process alive when no more browser session are connected.
+
 ### Usage Examples
 
 ```js
@@ -84,8 +91,10 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 
 ## Release History
 
-* v0.1.6 - No code changes. Updated test showcase to use `Protractor` v.20.1
-* v0.1.5 - Unpublished due to wrong dependencies settings
+* v0.1.8 - Add support for new configuration option `keepAlive`.
+* v0.1.7 - Fix for issue [#1](https://github.com/seckardt/grunt-protractor-webdriver/issues/1). Print out a warning if Selenium server is not present. Additionally stop Selenium server gracefully on clean Grunt process shutdown.
+* v0.1.6 - No code changes. Updated test showcase to use `Protractor` v.20.1.
+* v0.1.5 - Unpublished due to wrong dependencies settings.
 * v0.1.4 - No code changes. Just had to push new release as v0.1.3 seems to be lost in the NPM repo...
 * v0.1.3 - Fix regression of v0.1.2 with wrong Selenium server path being used. Add additional exit handlers for `.on('error')`, `.on('uncaughtException')` and `.on('SIGINT')`.
 * v0.1.2 - Harden waiting for all browser sessions to be deleted before shutdown. Due to possible race-conditions with log statements for multiple browser sessions in one line, the session counter didn't work properly.

@@ -41,7 +41,13 @@ module.exports = function (grunt) {
 		},
 
 		protractor_webdriver: {
-			e2e: {
+			alive: {
+				options: {
+					path: ptorDir,
+					keepAlive: true
+				}
+			},
+			dead: {
 				options: {
 					path: ptorDir
 				}
@@ -53,7 +59,8 @@ module.exports = function (grunt) {
 				configFile: 'protractor.conf.js',
 				keepAlive: false
 			},
-			local: {}
+			target1: {},
+			target2: {}
 		},
 
 		shell: {
@@ -71,8 +78,11 @@ module.exports = function (grunt) {
 		'default',
 		'express:server',
 		'shell:protractor',
-		'protractor_webdriver:e2e',
-		'protractor:local'
+		'protractor_webdriver:alive',
+		'protractor:target1',
+		'protractor:target2',
+		'protractor_webdriver:dead',
+		'protractor:target1'
 	]);
 
 	grunt.registerTask('server', [
