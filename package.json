@@ -1,5 +1,5 @@
 {
-  "name": "fc-grunt-protractor-webdriver",
+  "name": "grunt-protractor-webdriver",
   "description": "grunt plugin for starting Protractor's bundled Selenium Webdriver",
   "version": "0.1.6",
   "homepage": "https://github.com/seckardt/grunt-protractor-webdriver",
