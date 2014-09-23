@@ -20,15 +20,15 @@ module.exports = function (grunt) {
 		rl = require('readline'),
 		noop = function () {},
 		REGEXP_REMOTE = /RemoteWebDriver instances should connect to: (.*)/,
-		REGEXP_STARTED = /Started org\.openqa\.jetty\.jetty\.Server/,
-		REGEXP_RUNNING = /Selenium is already running/,
-		REGEXP_FAILURE = /Failed to start/,
-		REGEXP_NOTPRESENT = /Selenium Standalone is not present/i,
+		REGEXP_START_READY = /Started org\.openqa\.jetty\.jetty\.Server/,
+		REGEXP_START_RUNNING = /Selenium is already running/,
+		REGEXP_START_FAILURE = /Failed to start/,
+		REGEXP_START_NOTPRESENT = /Selenium Standalone is not present/i,
 		REGEXP_SESSION_DELETE = /Executing: \[delete session: (.*)\]/,
 		REGEXP_SESSION_NEW = /Executing: \[new session: (.*)\]/,
 		REGEXP_CAPABILITIES = /Capabilities \[\{(.*)\}\]/,
-		REGEXP_EXCEPTION = /Exception thrown(.*)/m,
-		REGEXP_FATAL = /Fatal error/,
+		REGEXP_EXIT_EXCEPTION = /Exception thrown(.*)/m,
+		REGEXP_EXIT_FATAL = /Fatal error/,
 		REGEXP_SHUTDOWN_OK = /OKOK/i,
 		DEFAULT_CMD = 'webdriver-manager start',
 		DEFAULT_INSTANCE = 'http://localhost:4444';
@@ -159,10 +159,10 @@ module.exports = function (grunt) {
 
 			if (REGEXP_REMOTE.test(out)) {
 				server = extract(REGEXP_REMOTE, out, 1).replace(/\/wd\/hub/, '') || server;
-			} else if (REGEXP_STARTED.test(out)) {
+			} else if (REGEXP_START_READY.test(out)) {
 				// Success
 				started(done);
-			} else if (REGEXP_RUNNING.test(out)) {
+			} else if (REGEXP_START_RUNNING.test(out)) {
 				if (failureTimeout) {
 					clearTimeout(failureTimeout);
 				}
@@ -177,26 +177,31 @@ module.exports = function (grunt) {
 						destroy();
 					}
 				});
-			} else if (REGEXP_FAILURE.test(out)) {
+			} else if (REGEXP_START_FAILURE.test(out)) {
 				// Failure -> Exit after timeout. The timeout is needed to
 				// enable further console sniffing as the output needed to
 				// match `REGEXP_RUNNING` is coming behind the failure message.
 				failureTimeout = setTimeout(destroy, 500);
-			} else if (REGEXP_NOTPRESENT.test(out)) {
+			} else if (REGEXP_START_NOTPRESENT.test(out)) {
 				// Failure -> Selenium server not present
 				grunt.warn(out);
-			} else if (REGEXP_EXCEPTION.test(out)) {
+			} else if (REGEXP_EXIT_EXCEPTION.test(out)) {
 				// Failure -> Exit
-				grunt.log.writeln('Exception thrown:'.red + ' Going to shut down the Selenium server');
-				stackTrace = out;
-				destroy();
-			} else if (REGEXP_FATAL.test(out)) {
+				var msg = 'Exception thrown: '.red;
+				if (options.keepAlive) {
+					grunt.log.writeln(msg + 'Keeping the Selenium server alive');
+				} else {
+					grunt.log.writeln(msg + 'Going to shut down the Selenium server');
+					stackTrace = out;
+					destroy();
+				}
+			} else if (REGEXP_EXIT_FATAL.test(out)) {
 				// Failure -> Exit
 				destroy();
 			} else if (REGEXP_SESSION_NEW.test(out)) {
 				// As there might be race-conditions with multiple logs for
 				// `REGEXP_SESSION_NEW` in one log statement, we have to parse
-				// parse the data
+				// the data
 				lines = out.split(/[\n\r]/);
 				lines.forEach(function (line) {
 					if (REGEXP_SESSION_NEW.test(line)) {
@@ -207,7 +212,7 @@ module.exports = function (grunt) {
 				});
 			} else if (REGEXP_SESSION_DELETE.test(out)) {
 				// As there might be race-conditions with multiple logs for
-				// `REGEXP_SESSION_NEW` in one log statement, we have to parse
+				// `REGEXP_SESSION_DELETE` in one log statement, we have to
 				// parse the data
 				lines = out.split(/[\n\r]/);
 				lines.forEach(function (line) {
