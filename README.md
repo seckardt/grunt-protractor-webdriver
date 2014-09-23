@@ -91,6 +91,7 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 
 ## Release History
 
+* v0.1.9 - Use configuration option `keepAlive` also in case of exception being thrown by the Selenium process. Alternative implementation for original PR [#5](https://github.com/seckardt/grunt-protractor-webdriver/pull/5).
 * v0.1.8 - Add support for new configuration option `keepAlive`.
 * v0.1.7 - Fix for issue [#1](https://github.com/seckardt/grunt-protractor-webdriver/issues/1). Print out a warning if Selenium server is not present. Additionally stop Selenium server gracefully on clean Grunt process shutdown.
 * v0.1.6 - No code changes. Updated test showcase to use `Protractor` v.20.1.
