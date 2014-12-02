@@ -1,11 +1,11 @@
 {
   "name": "grunt-protractor-webdriver",
   "description": "grunt plugin for starting Protractor's bundled Selenium Webdriver",
-  "version": "0.1.9",
+  "version": "0.2.0",
   "private": true,
   "homepage": "https://github.com/seckardt/grunt-protractor-webdriver",
   "devDependencies": {
-    "angular": "~1.2.25"
+    "angular": "~1.3.5"
   },
   "keywords": [
     "gruntplugin",

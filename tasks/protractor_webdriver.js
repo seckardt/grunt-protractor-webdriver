@@ -30,6 +30,7 @@ module.exports = function (grunt) {
 		REGEXP_EXIT_EXCEPTION = /Exception thrown(.*)/m,
 		REGEXP_EXIT_FATAL = /Fatal error/,
 		REGEXP_SHUTDOWN_OK = /OKOK/i,
+		DEFAULT_PATH = 'node_modules/protractor/bin/',
 		DEFAULT_CMD = 'webdriver-manager start',
 		DEFAULT_INSTANCE = 'http://localhost:4444';
 
@@ -78,7 +79,7 @@ module.exports = function (grunt) {
 		function start() {
 			grunt.log.writeln((restartedPrefix + 'tarting').cyan + ' Selenium server');
 
-			selenium = exec(options.path + options.command);
+			selenium = exec('node ' + options.path + options.command);
 			selenium.on('error', exit)
 				.on('uncaughtException', exit)
 				.on('exit', exit)
@@ -252,7 +253,7 @@ module.exports = function (grunt) {
 
 	grunt.registerMultiTask('protractor_webdriver', 'grunt plugin for starting Protractor\'s bundled Selenium Webdriver', function () {
 		new Webdriver(this, this.options({
-			path: '',
+			path: DEFAULT_PATH,
 			command: DEFAULT_CMD,
 			keepAlive: false
 		}));
