@@ -1,7 +1,8 @@
 var express = require('express'),
-    app = express();
+	compression = require('compression'),
+	app = express();
 
-app.use(express.compress());
+app.use(compression());
 app.use(express.static('bower_components'));
 app.use(express.static('test/e2e'));
 
