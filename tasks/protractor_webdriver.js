@@ -17,6 +17,7 @@ module.exports = function (grunt) {
 
 	var spawn = require('child_process').spawn,
 		http = require('http'),
+		split = require('split'),
 		rl = require('readline'),
 		noop = function () {},
 		REGEXP_REMOTE = /RemoteWebDriver instances should connect to: (.*)/,
@@ -88,8 +89,8 @@ module.exports = function (grunt) {
 
 			selenium.stdout.setEncoding('utf8');
 			selenium.stderr.setEncoding('utf8');
-			selenium.stdout.on('data', data);
-			selenium.stderr.on('data', data);
+			selenium.stdout.pipe(split()).on('data', data);
+			selenium.stderr.pipe(split()).on('data', data);
 
 			destroy = exit(selenium);
 		}
