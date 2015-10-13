@@ -8,6 +8,7 @@
     <CLASSES>
       <root url="file://$PROJECT_DIR$/bower_components/angular/angular.js" />
     </CLASSES>
+    <JAVADOC />
     <SOURCES />
   </library>
 </component>
