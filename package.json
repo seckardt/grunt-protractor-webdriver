@@ -1,7 +1,7 @@
 {
   "name": "grunt-protractor-webdriver",
   "description": "grunt plugin for starting Protractor's bundled Selenium Webdriver",
-  "version": "0.2.3",
+  "version": "0.2.5",
   "homepage": "https://github.com/seckardt/grunt-protractor-webdriver",
   "author": {
     "name": "Steffen Eckardt",
@@ -31,7 +31,9 @@
     "grunt-express": "~1.4.1",
     "grunt-protractor-runner": "~2.1.0",
     "grunt-shell": "~1.1.2",
-    "protractor": "~2.5.1",
+    "protractor": "~2.5.1"
+  },
+  "dependencies": {
     "split": "^1.0.0"
   },
   "peerDependencies": {
