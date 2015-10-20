@@ -61,7 +61,7 @@ module.exports = function (grunt) {
 				options: {
 					stdout: true
 				},
-				command: path.resolve('node_modules/protractor/bin/webdriver-manager') + ' update --standalone --chrome'
+				command: 'node ' + path.resolve('node_modules/protractor/bin/webdriver-manager') + ' update --standalone --chrome'
 			}
 		}
 	});
