@@ -44,7 +44,7 @@ module.exports = function (grunt) {
 		if (process.platform === 'win32') {
 			opts.windowsVerbatimArguments = true;
 
-			var child = spawn('cmd.exe', ['/s', '/c', command.replace(/\//g, '\\')], opts);
+			var child = spawn('cmd.exe', ['/s', '/c', 'node', command.replace(/\//g, '\\')], opts);
 			rl.createInterface({
 				input: process.stdin,
 				output: process.stdout
